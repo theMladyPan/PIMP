@@ -1,6 +1,7 @@
 from Tkinter import *
 from ttk import *
-import PIL, Image, ImageTk, random
+from PIL import Image
+import PIL, ImageTk, random, os
 from tkFileDialog import askopenfilename, asksaveasfilename
 from math import log
 from multiprocessing import Process, Queue, cpu_count
@@ -17,28 +18,50 @@ SOBEL_Y_MASK = ( (1,3,1),(0,0,0),(-1,-3,-1) )
     
 MEAN = 0
 MEDIAN = 1
-q=Queue()
 
 class MultiP(Process):
-	def __init__(self, ID, queue, image, funct):
-		self.queue=queue
-		Process.__init__(self)
-		self.start()
-		self.image=image
-		self.func=funct
-		self.ID=ID
-	def run(self):
+    def __init__(self, ID, queue, image, funct):
+        self.queue=queue
+        Process.__init__(self)
+        
+        self.image=image
+        self.func=funct
+        self.ID=ID
+        self.start()
+    def run(self):
 		
-		self.queue.put([self.ID, self.funct(self.image)])
+        self.queue.put([self.ID, self.func(self.image)])
+        self.queue.put([self.ID, chr(0)])
+		
 		
 def dummy_func(text):
-	return text*2
+    "only dummy function"
+    return text*2
 		
-for i in range(cpu_count()):
-	MultiP(i, q, "text", dummy_func)
-	
-while 1:
-	print q.get()
+def multiproc(image, funct):
+    cores=cpu_count()
+    "use all cores to make transformation"
+    queue=Queue()
+    
+    obr2=Image.new(image.mode, image.size)
+    width,height = image.size
+    fract=height/cores
+        
+    for i in range(cpu_count()):
+        print i, fract*i, fract*(i+1)
+        
+        MultiP(i, queue, image.crop((0,fract*i,1024,fract*(i+1))), funct)
+            	
+        
+    while cores:
+        result=queue.get()
+        if result[1]==chr(0):
+            cores-=1
+        else:
+            print cores*fract
+            obr2.paste(result[1],(0,result[0]*fract))
+        
+    return obr2
 
 def median(values):
     "return median of list 'values'"
@@ -377,4 +400,4 @@ def show(obr, title="Peek"):
     main.mainloop()
         
 if __name__ == "__main__":
-    pass
+    show(multiproc(openImage("obr.JPG"),adaptiveTreshold))
