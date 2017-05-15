@@ -3,6 +3,7 @@ from ttk import *
 import PIL, Image, ImageTk, random
 from tkFileDialog import askopenfilename, asksaveasfilename
 from math import log
+from multiprocessing import Process, Queue, cpu_count
 
 EDGE_MASK=( (0,-1,0),(-1,4,-1),(0,-1,0) )
 LAPLACIAN_MASK=EDGE_MASK
@@ -16,6 +17,8 @@ SOBEL_Y_MASK = ( (1,3,1),(0,0,0),(-1,-3,-1) )
     
 MEAN = 0
 MEDIAN = 1
+
+def multiprocess()
 
 def median(values):
     "return median of list 'values'"
