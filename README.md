@@ -1,2 +1,2 @@
-#Python image manupulation program
+#pimp
 Explanation coming soon...
