@@ -17,8 +17,28 @@ SOBEL_Y_MASK = ( (1,3,1),(0,0,0),(-1,-3,-1) )
     
 MEAN = 0
 MEDIAN = 1
+q=Queue()
 
-def multiprocess()
+class MultiP(Process):
+	def __init__(self, ID, queue, image, funct):
+		self.queue=queue
+		Process.__init__(self)
+		self.start()
+		self.image=image
+		self.func=funct
+		self.ID=ID
+	def run(self):
+		
+		self.queue.put([self.ID, self.funct(self.image)])
+		
+def dummy_func(text):
+	return text*2
+		
+for i in range(cpu_count()):
+	MultiP(i, q, "text", dummy_func)
+	
+while 1:
+	print q.get()
 
 def median(values):
     "return median of list 'values'"
