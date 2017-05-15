@@ -1,3 +1,19 @@
+"""
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+        
+    """
+
 from Tkinter import *
 from ttk import *
 from PIL import Image
@@ -18,6 +34,11 @@ SOBEL_Y_MASK = ( (1,3,1),(0,0,0),(-1,-3,-1) )
     
 MEAN = 0
 MEDIAN = 1
+
+print """Welcome to: Python image manipulation program,  Copyright (C) 2017  Stanislav Rubint, Ing.
+This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
+This is free software, and you are welcome to redistribute it
+under certain conditions; type `show c' for details."""
 
 class MultiP(Process):
     def __init__(self, ID, queue, image, funct, args):
@@ -49,7 +70,6 @@ def multiproc(image, funct,args):
     fract=height/cores
         
     for i in range(cpu_count()):
-        print i, fract*i, fract*(i+1)
         
         MultiP(i, queue, image.crop((0,fract*i,width,fract*(i+1))), funct,args)
             	
@@ -59,7 +79,6 @@ def multiproc(image, funct,args):
         if result[1]==chr(0):
             cores-=1
         else:
-            print result[0]*fract
             obr2.paste(result[1],(0,result[0]*fract))
         
     return obr2
@@ -171,7 +190,8 @@ def save(obr, destination=False):
         obr.save(destination)
     else:
         main=Tk()
-        obr.save(asksaveasfilename(initialfile="image", defaultextension=".jpg", filetypes=[("JPEG",".jpg"),("PNG",".png"),("BMP",".bmp"),("TIF",".tif")]))
+        filename=asksaveasfilename(initialfile="image", defaultextension=".jpg", filetypes=[("JPEG",".jpg"),("PNG",".png"),("BMP",".bmp"),("TIF",".tif")])
+        if filename != "": obr.save(filename)
         main.destroy()
         
 def equalize(obr):
@@ -401,5 +421,5 @@ def show(obr, title="Peek"):
     main.mainloop()
         
 if __name__ == "__main__":
-    save( multiproc( multiproc(toGrey(openImage("obr.jpg")),medianFilter, ()), adaptiveTreshold, (MEAN,1) ) )
+    save( multiproc( multiproc(toGrey(openImage("img/obr.jpg")),medianFilter, ()), adaptiveTreshold, (MEAN,1) ) )
     #show(exponential(openImage("obr.jpg"),1.2))

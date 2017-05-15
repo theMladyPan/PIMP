@@ -1,2 +1,2 @@
-# test
-Only test repo
+#Python image manupulation program
+Explanation coming soon...
