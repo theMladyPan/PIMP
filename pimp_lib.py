@@ -27,11 +27,11 @@ class MultiP(Process):
         self.image=image
         self.func=funct
         self.ID=ID
-        self.start()
         self.args=args
+        self.start()
     def run(self):
 		
-        self.queue.put([self.ID, self.func(self.image,self.args)])
+        self.queue.put([self.ID, self.func(self.image, self.args)])
         self.queue.put([self.ID, chr(0)])
 		
 		
@@ -39,7 +39,7 @@ def dummy_func(text):
     "only dummy function"
     return text*2
 		
-def multiproc(image, funct):
+def multiproc(image, funct,args):
     cores=cpu_count()
     "use all cores to make transformation"
     queue=Queue()
@@ -51,7 +51,7 @@ def multiproc(image, funct):
     for i in range(cpu_count()):
         print i, fract*i, fract*(i+1)
         
-        MultiP(i, queue, image.crop((0,fract*i,width,fract*(i+1))), funct)
+        MultiP(i, queue, image.crop((0,fract*i,width,fract*(i+1))), funct,args)
             	
         
     while cores:
@@ -203,7 +203,7 @@ def equalize(obr):
     elif obr.mode=="RGB":
         return merge(equalize(disintegrate(obr)[0]),equalize(disintegrate(obr)[1]),equalize(disintegrate(obr)[2]))
     
-def logarithm(obr):
+def logarithm(obr, args):
     "apply logarithmic function to each pixel, enlightens the dark places over bright background"
     
     if obr.mode=="L":
@@ -218,7 +218,7 @@ def logarithm(obr):
         c=255/(log(1+max(values)))
         for x in range(obr.size[0]):
             for y in range(obr.size[1]):
-                pxn[x,y]=c*log(pxo[x,y]+1)
+                pxn[x,y]=int(c*log(pxo[x,y]+1))
         return obr2
     
     elif obr.mode=="RGB":
@@ -234,9 +234,9 @@ def exponential(obr, koef=1.2):
     for x in range(obr.size[0]):
         for y in range(obr.size[1]):
             if obr.mode=="L":
-                pxn[x,y]=(pxo[x,y])**koef
+                pxn[x,y]=int((pxo[x,y])**koef)
             elif obr.mode=="RGB":
-                pxn[x,y]=(pxo[x,y][0]**koef,pxo[x,y][1]**koef,pxo[x,y][2]**koef)
+                pxn[x,y]=(int(pxo[x,y][0]**koef),int(pxo[x,y][1]**koef),int(pxo[x,y][2]**koef))
                     
     return obr2   
     
@@ -358,7 +358,7 @@ def noise(obr, koeff=0.5):
     
     return obr2
 
-def medianFilter(obr):
+def medianFilter(obr, args):
     "apply median filter over image"
     
     obr2=Image.new(obr.mode, obr.size)
@@ -401,4 +401,5 @@ def show(obr, title="Peek"):
     main.mainloop()
         
 if __name__ == "__main__":
-    show(multiproc(toGrey(openImage("obr.jpg")),exponential, ()))
+    save( multiproc( multiproc(toGrey(openImage("obr.jpg")),medianFilter, ()), adaptiveTreshold, (MEAN,1) ) )
+    #show(exponential(openImage("obr.jpg"),1.2))
