@@ -20,7 +20,7 @@ MEAN = 0
 MEDIAN = 1
 
 class MultiP(Process):
-    def __init__(self, ID, queue, image, funct):
+    def __init__(self, ID, queue, image, funct, args):
         self.queue=queue
         Process.__init__(self)
         
@@ -28,9 +28,10 @@ class MultiP(Process):
         self.func=funct
         self.ID=ID
         self.start()
+        self.args=args
     def run(self):
 		
-        self.queue.put([self.ID, self.func(self.image)])
+        self.queue.put([self.ID, self.func(self.image,self.args)])
         self.queue.put([self.ID, chr(0)])
 		
 		
@@ -50,7 +51,7 @@ def multiproc(image, funct):
     for i in range(cpu_count()):
         print i, fract*i, fract*(i+1)
         
-        MultiP(i, queue, image.crop((0,fract*i,1024,fract*(i+1))), funct)
+        MultiP(i, queue, image.crop((0,fract*i,width,fract*(i+1))), funct)
             	
         
     while cores:
@@ -58,7 +59,7 @@ def multiproc(image, funct):
         if result[1]==chr(0):
             cores-=1
         else:
-            print cores*fract
+            print result[0]*fract
             obr2.paste(result[1],(0,result[0]*fract))
         
     return obr2
@@ -400,4 +401,4 @@ def show(obr, title="Peek"):
     main.mainloop()
         
 if __name__ == "__main__":
-    show(multiproc(openImage("obr.JPG"),adaptiveTreshold))
+    show(multiproc(toGrey(openImage("obr.jpg")),exponential, ()))
