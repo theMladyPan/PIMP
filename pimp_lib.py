@@ -13,7 +13,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PIL import Image
 import PIL, random, os
 from math import log
 from multiprocessing import Process, Queue, cpu_count
@@ -22,11 +21,13 @@ if sys.version_info[0]>=3:
     from tkinter import *
     from tkinter.filedialog import askopenfilename, asksaveasfilename
     from tkinter.ttk import *
+    import PIL.Image as Image
 else: #if python 2.x
     from Tkinter import *
     from tkFileDialog import askopenfilename, asksaveasfilename
     from ttk import *
     from PIL import ImageTk
+    from PIL import Image
 
 
 EDGE_MASK=( (0,-1,0),(-1,4,-1),(0,-1,0) )
@@ -41,11 +42,6 @@ SOBEL_Y_MASK = ( (1,3,1),(0,0,0),(-1,-3,-1) )
 
 MEAN = 0
 MEDIAN = 1
-
-print("""Welcome to: Python image manipulation program lib,  Copyright (C) 2017  Stanislav Rubint, Ing.
-This program comes with ABSOLUTELY NO WARRANTY
-This is free software, and you are welcome to redistribute it
-under certain conditions""")
 
 class MultiP(Process):
     def __init__(self, ID, queue, image, funct, args):
@@ -68,18 +64,16 @@ def dummy_func(text):
     return text*2
 
 def multiproc(image, funct,args):
-    cores=cpu_count()
     "use all cores to make transformation"
+    cores=cpu_count()
     queue=Queue()
 
     obr2=Image.new(image.mode, image.size)
     width,height = image.size
-    fract=height/cores
+    fract=int(height/cores)
 
     for i in range(cpu_count()):
-
         MultiP(i, queue, image.crop((0,fract*i,width,fract*(i+1))), funct,args)
-
 
     while cores:
         result=queue.get()
@@ -100,7 +94,6 @@ def median(values):
 
 class Dialog:
     def __init__(self, otazka="Are you sure?", nazov="?"):
-
         self.main=Tk()
         self.main.title(nazov)
         Label(self.main, text=otazka).grid(row=0, columnspan=2, sticky="wens")
@@ -432,5 +425,5 @@ def show(obr, title="Peek"):
     main.mainloop()
 
 if __name__ == "__main__":
-    save( multiproc( multiproc(toGrey(openImage("img/obr.jpg")),medianFilter, ()), adaptiveTreshold, (MEAN,1) ) )
+    save( multiproc( multiproc(toGrey(openImage("img/obr.jpg")),medianFilter, ()), adaptiveTreshold, (MEAN,1) ),"img/out.jpg" )
     #show(exponential(openImage("obr.jpg"),1.2))
