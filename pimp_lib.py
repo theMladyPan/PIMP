@@ -54,16 +54,17 @@ class MultiP(Process):
         self.args=args
         self.start()
     def run(self):
-
-        self.queue.put([self.ID, self.func(self.image, self.args)])
+        if self.args:
+            self.queue.put([self.ID, self.func(self.image, self.args)])
+        else:
+            self.queue.put([self.ID, self.func(self.image)])
         self.queue.put([self.ID, chr(0)])
-
 
 def dummy_func(text):
     "only dummy function"
     return text*2
 
-def multiproc(image, funct,args):
+def multiproc(image, funct,args=()):
     "use all cores to make transformation"
     cores=cpu_count()
     queue=Queue()
@@ -260,6 +261,23 @@ def exponential(obr, koef=1.2):
 
     return obr2
 
+def substract(obr1, obr2):
+    if obr1.mode == obr2.mode and obr1.size == obr2.size:
+        obr3=Image.new(obr1.mode, obr1.size)
+        px2=obr2.load()
+        px1=obr1.load()
+        px3=obr3.load()
+
+        if obr1.mode=="L":
+            for x in range(obr1.size[0]):
+                for y in range(obr1.size[1]):
+                    px3[x,y]=px1[x,y]-px2[x,y]
+            return obr3
+        if obr1.mode=="RGB":
+            return(merge( substract(disintegrate(obr1)[0], disintegrate(obr2)[0]), substract(disintegrate(obr1)[1], disintegrate(obr2)[1]), substract(disintegrate(obr1)[2], disintegrate(obr2)[2]) ))
+    else:
+        raise IndexError
+
 def adaptiveTreshold(obr, method=MEAN, bias=0):
     "5x5 adaptive treshold useful for tresholding image with uneven lightning"
 
@@ -328,31 +346,33 @@ def mask(obr, m, bias=0, k=1):
 
     return obr2
 
-def histogram(obr):
+def histogram(obr, gui=True):
     "plot out the histogram of image"
 
     data=obr.histogram()
     data_max=float(max(data))
-    main2=Tk()
-    main2.title("Histogram, image %s, mode %s, from %d to %d"%(obr.size,obr.mode, min(data), data_max))
-    main=Frame(main2)
-    main.pack(fill=BOTH, expand=1)
+    if gui:
+        main2=Tk()
+        main2.title("Histogram, image %s, mode %s, from %d to %d"%(obr.size,obr.mode, min(data), data_max))
+        main=Frame(main2)
+        main.pack(fill=BOTH, expand=1)
 
-    if obr.mode=="RGB":
-        board=Canvas(main, width=770, height=256)
-        for i in range(768):
-            board.create_line(i+2,256,i+2,256-(data[i]/data_max)*256, fill="red")
+        if obr.mode=="RGB":
+            board=Canvas(main, width=770, height=256)
+            for i in range(768):
+                board.create_line(i+2,256,i+2,256-(data[i]/data_max)*256, fill="red")
 
-    elif obr.mode=="L":
-        board=Canvas(main, width=514, height=512)
-        for i in range(512):
-            board.create_line(i+2,512,i+2,512-(data[i/2]/data_max)*512, fill="red")
-    else:
-        print("unknown type %s"%obr.mode)
+        elif obr.mode=="L":
+            board=Canvas(main, width=514, height=512)
+            for i in range(512):
+                board.create_line(i+2,512,i+2,512-(data[i/2]/data_max)*512, fill="red")
+        else:
+            print("unknown type %s"%obr.mode)
 
-    board.pack(fill=BOTH, expand=1)
-    Button(main, text="Close", command=main2.destroy).pack(fill=BOTH, expand=1)
-    main2.mainloop()
+        board.pack(fill=BOTH, expand=1)
+        Button(main, text="Close", command=main2.destroy).pack(fill=BOTH, expand=1)
+        main2.mainloop()
+    return data
 
 def disintegrate(obr):
     r, g, b = obr.split()
@@ -415,12 +435,13 @@ def medianFilter(obr, args):
 def show(obr, title="Peek"):
     main=Tk()
     main.title(title)
-    if sys.version_info[0]>=3:
-        image = tkinter.PhotoImage(obr)
-    else:
-        image = ImageTk.PhotoImage(obr)
     canvas = Canvas(main,width=obr.size[0],height=obr.size[1])
-    canvas.create_image(obr.size[0]/2,obr.size[1]/2,image=image)
+    if sys.version_info[0]>=3:
+        img = PhotoImage(obr)
+        canvas.create_image(obr.size[0]/2,obr.size[1]/2,image=img) #TODO: does not work !!!
+    else:
+        img = ImageTk.PhotoImage(obr)
+        canvas.create_image(obr.size[0]/2,obr.size[1]/2,image=img)
     canvas.pack()
     main.mainloop()
 
