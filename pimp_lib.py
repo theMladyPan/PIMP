@@ -88,7 +88,7 @@ def median(values):
     if len(values)%2==1:
         return values[int(len(values)/2)]
     else:
-        return float((values[len(values)/2]+values[(len(values)/2)-1])/2.0)
+        return float((values[int(len(values)/2)]+values[(int(len(values)/2))-1])/2.0)
 
 class Dialog:
     def __init__(self, otazka="Are you sure?", nazov="?"):
