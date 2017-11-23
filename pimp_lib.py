@@ -13,13 +13,21 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from tkinter import *
-from tkinter.ttk import *
 from PIL import Image
 import PIL, random, os
-from tkinter.filedialog import askopenfilename, asksaveasfilename
 from math import log
 from multiprocessing import Process, Queue, cpu_count
+import sys
+if sys.version_info[0]>=3:
+    from tkinter import *
+    from tkinter.filedialog import askopenfilename, asksaveasfilename
+    from tkinter.ttk import *
+else:
+    from Tkinter import *
+    from tkFileDialog import askopenfilename, asksaveasfilename
+    from ttk import *
+    import ImageTk
+
 
 EDGE_MASK=( (0,-1,0),(-1,4,-1),(0,-1,0) )
 LAPLACIAN_MASK=EDGE_MASK
@@ -414,7 +422,10 @@ def medianFilter(obr, args):
 def show(obr, title="Peek"):
     main=Tk()
     main.title(title)
-    image = tkinter.PhotoImage(obr)
+    if sys.version_info[0]>=3:
+        image = tkinter.PhotoImage(obr)
+    else:
+        image = ImageTk.PhotoImage(obr)
     canvas = Canvas(main,width=obr.size[0],height=obr.size[1])
     canvas.create_image(obr.size[0]/2,obr.size[1]/2,image=image)
     canvas.pack()
