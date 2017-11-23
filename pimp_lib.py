@@ -26,7 +26,7 @@ else:
     from Tkinter import *
     from tkFileDialog import askopenfilename, asksaveasfilename
     from ttk import *
-    import ImageTk
+    from PIL import ImageTk
 
 
 EDGE_MASK=( (0,-1,0),(-1,4,-1),(0,-1,0) )
