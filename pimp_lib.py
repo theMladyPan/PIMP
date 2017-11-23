@@ -399,7 +399,7 @@ def noise(obr, koeff=0.5):
 
     return obr2
 
-def medianFilter(obr, args):
+def medianFilter(obr, args=()):
     "apply median filter over image"
 
     obr2=Image.new(obr.mode, obr.size)
