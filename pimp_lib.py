@@ -86,7 +86,7 @@ def median(values):
     "return median of list 'values'"
     values.sort()
     if len(values)%2==1:
-        return values[len(values)/2]
+        return values[int(len(values)/2)]
     else:
         return float((values[len(values)/2]+values[(len(values)/2)-1])/2.0)
 
