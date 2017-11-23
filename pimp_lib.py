@@ -16,8 +16,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from tkinter import *
 from tkinter.ttk import *
 from PIL import Image
-import PIL, ImageTk, random, os
-from tkFileDialog import askopenfilename, asksaveasfilename
+import PIL, random, os
+from tkinter.filedialog import askopenfilename, asksaveasfilename
 from math import log
 from multiprocessing import Process, Queue, cpu_count
 
@@ -414,7 +414,7 @@ def medianFilter(obr, args):
 def show(obr, title="Peek"):
     main=Tk()
     main.title(title)
-    image = ImageTk.PhotoImage(obr)
+    image = tkinter.PhotoImage(obr)
     canvas = Canvas(main,width=obr.size[0],height=obr.size[1])
     canvas.create_image(obr.size[0]/2,obr.size[1]/2,image=image)
     canvas.pack()
