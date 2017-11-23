@@ -34,10 +34,10 @@ SOBEL_Y_MASK = ( (1,3,1),(0,0,0),(-1,-3,-1) )
 MEAN = 0
 MEDIAN = 1
 
-print("""Welcome to: Python image manipulation program,  Copyright (C) 2017  Stanislav Rubint, Ing.
-This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
+print("""Welcome to: Python image manipulation program lib,  Copyright (C) 2017  Stanislav Rubint, Ing.
+This program comes with ABSOLUTELY NO WARRANTY
 This is free software, and you are welcome to redistribute it
-under certain conditions; type `show c' for details.""")
+under certain conditions""")
 
 class MultiP(Process):
     def __init__(self, ID, queue, image, funct, args):
