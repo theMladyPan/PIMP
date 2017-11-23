@@ -1,7 +1,4 @@
-PIMP2==1.0;python_version<"2.7"
-PIMP3==1.0;python_version>="3.5"
+pillow>=4.3.0
+pillow>=4.3.0
 
-PIMP2;pillow>=4.3.0
-PIMP3;pillow>=4.3.0
-
-PIMP2;ttk
+ttk;python_version<"2.7"
