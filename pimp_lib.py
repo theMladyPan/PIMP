@@ -22,7 +22,7 @@ if sys.version_info[0]>=3:
     from tkinter import *
     from tkinter.filedialog import askopenfilename, asksaveasfilename
     from tkinter.ttk import *
-else:
+else: #if python 2.x
     from Tkinter import *
     from tkFileDialog import askopenfilename, asksaveasfilename
     from ttk import *
