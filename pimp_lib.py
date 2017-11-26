@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import PIL, random, os
 from math import log
 from multiprocessing import Process, Queue, cpu_count
+import numpy
 import sys
 if sys.version_info[0]>=3:
     from tkinter import *
@@ -115,8 +116,12 @@ class Dialog:
     def get(self):
         return self.vystup
 
-def openImage(source_file):
-    return Image.open(source_file)
+def openImage(source):
+    "Open image from file / Create one from ndarray"
+    if type(source) == type(""):
+        return Image.open(source)
+    else:
+        raise TypeError("expect string or ndarray")
 
 def resize(obr, width=1024, height=0):
     if height:
@@ -141,6 +146,22 @@ def invert(obr):
                 pxn[x,y]=256-pxo[x,y]
             elif obr.mode=="RGB":
                 pxn[x,y]=(256-pxo[x,y][0],256-pxo[x,y][1],256-pxo[x,y][2])
+
+                return obr2
+
+def multiply(obr, koef=1):
+    "multiply each pixel value of loaded image by koef"
+
+    obr2=Image.new(obr.mode, obr.size)
+    pxn=obr2.load()
+    pxo=obr.load()
+
+    for x in range(obr.size[0]):
+        for y in range(obr.size[1]):
+            if obr.mode=="L":
+                pxn[x,y]=int(koef*pxo[x,y])
+            elif obr.mode=="RGB":
+                pxn[x,y]=(int(koef*pxo[x,y][0]),int(koef*pxo[x,y][1]),int(koef*pxo[x,y][2]))
 
     return obr2
 
@@ -224,7 +245,7 @@ def equalize(obr):
     elif obr.mode=="RGB": #clever usage of recursion
         return merge(equalize(disintegrate(obr)[0]),equalize(disintegrate(obr)[1]),equalize(disintegrate(obr)[2]))
 
-def logarithm(obr, args):
+def logarithm(obr, args=None):
     "apply logarithmic function to each pixel, enlightens the dark places over bright background"
 
     if obr.mode=="L":
@@ -236,7 +257,7 @@ def logarithm(obr, args):
         for x in range(obr.size[0]):
             for y in range(obr.size[1]):
                 values.append(pxo[x,y])
-        c=255/(log(1+max(values)))
+                c=255/(log(1+max(values)))
         for x in range(obr.size[0]):
             for y in range(obr.size[1]):
                 pxn[x,y]=int(c*log(pxo[x,y]+1))
