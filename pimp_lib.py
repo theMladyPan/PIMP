@@ -56,7 +56,7 @@ class MultiP(Process):
         self.start()
     def run(self):
         if self.args:
-            self.queue.put([self.ID, self.func(self.image, self.args)])
+            self.queue.put([self.ID, self.func(self.image, *self.args)])
         else:
             self.queue.put([self.ID, self.func(self.image)])
         self.queue.put([self.ID, chr(0)])
@@ -197,12 +197,12 @@ def treshold(obr, treshold=None):
     if obr.mode=="L":
         for x in range(obr.size[0]):
             for y in range(obr.size[1]):
-                pxn[x,y]=255*(pxo[x,y]/treshold)
+                pxn[x,y]=int(255*(pxo[x,y]/treshold))
 
     elif obr.mode=="RGB":
         for x in range(obr.size[0]):
             for y in range(obr.size[1]):
-                pxn[x,y]=((pxo[x,y][0]/treshold)*255,(pxo[x,y][1]/treshold)*255,(pxo[x,y][2]/treshold)*255)
+                pxn[x,y]=(int((pxo[x,y][0]/treshold)*255),int((pxo[x,y][1]/treshold)*255),int((pxo[x,y][2]/treshold)*255))
 
     return obr2
 
@@ -299,9 +299,11 @@ def substract(obr1, obr2):
     else:
         raise IndexError
 
-def adaptiveTreshold(obr, method=MEAN, bias=0):
-    "5x5 adaptive treshold useful for tresholding image with uneven lightning"
-
+def adaptiveTreshold(obr, method=MEAN, bias=1):
+    """
+    @param obr: input Image
+    @return thresholded image
+    5x5 adaptive treshold useful for tresholding image with uneven lightning"""
     if obr.mode=="L":
         obr2=Image.new(obr.mode, obr.size)
         pxn=obr2.load()
@@ -309,7 +311,7 @@ def adaptiveTreshold(obr, method=MEAN, bias=0):
         for x in range(obr.size[0]):
             for y in range(obr.size[1]):
                 try:
-                    if method==MEDIAN: #rewrite thi so it is flexible in area scaling
+                    if method==MEDIAN: #TODO rewrite this so it is flexible in area scaling
                         treshold=int(median([pxo[x-2,y-2],pxo[x-1,y-2],pxo[x,y-2],pxo[x+1,y-2],pxo[x+2,y-2],
                               pxo[x-2,y-1],pxo[x-1,y-1],pxo[x,y-1],pxo[x+1,y-1],pxo[x+2,y-1],
                               pxo[x-2,y]  ,pxo[x-1,y]  ,pxo[x,y]  ,pxo[x+1,y]  ,pxo[x+2,y],
@@ -467,5 +469,8 @@ def show(obr, title="Peek"):
     main.mainloop()
 
 if __name__ == "__main__":
-    save( multiproc( multiproc(toGrey(openImage("img/obr.jpg")),medianFilter, ()), adaptiveTreshold, (MEAN,1) ),"img/out.jpg" )
+    #save( multiproc( multiproc(toGrey(openImage("img/obr.jpg")),medianFilter, ()), adaptiveTreshold, (MEAN,1) ),"img/out.jpg" )
     #show(exponential(openImage("obr.jpg"),1.2))
+
+    save( multiproc( toGrey(openImage("03p.jpg")), adaptiveTreshold, args=(MEAN,5)), "0c3pout.jpg")
+    #save( treshold( toGrey(openImage("input.jpg")), 200 ), "trshld.jpg" )
