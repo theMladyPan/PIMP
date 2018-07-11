@@ -1,18 +1,34 @@
+#!/usr/bin/env python
+
 import random
 from math import log
 from multiprocessing import Process, Queue, cpu_count
 import sys
 if sys.version_info[0] >= 3:
-    from tkinter import *
-    from tkinter.filedialog import askopenfilename, asksaveasfilename
-    from tkinter.ttk import *
-    import PIL.Image as Image
+    try:
+        from tkinter import *
+        from tkinter.filedialog import askopenfilename, asksaveasfilename
+        from tkinter.ttk import *
+        import PIL.Image as Image
+        from PIL import ImageTk
+    except ModuleNotFoundError:
+        type, value, traceback = sys.exc_info()
+        print("Unmet dependencies(%s), please install with:\npip3 install\
+ -r ./requirements.txt&&apt-get install -y python3-tk" % value)
+        exit(1)
 else:  # if python 2.x
-    from Tkinter import *
-    from tkFileDialog import askopenfilename, asksaveasfilename
-    from ttk import *
-    from PIL import ImageTk
-    from PIL import Image
+    try:
+        from Tkinter import *
+        from tkFileDialog import askopenfilename, asksaveasfilename
+        from ttk import *
+        from PIL import ImageTk
+        from PIL import Image
+    except ImportError:
+        type, value, traceback = sys.exc_info()
+        print("Unmet dependencies(%s), please install with:\npip install\
+ -r ./requirements.txt&&apt-get install -y python-tk" % value)
+        exit(1)
+        exit(1)
 
 __package__ = "PIMP"
 __version__ = "0.2.1"
@@ -55,7 +71,7 @@ class MultiP(Process):
 
     def __init__(self, ID, queue, image, funct, args):
         self.queue = queue
-        Process.__init__(self)
+        super(MultiP, self).__init__()
 
         self.image = image
         self.func = funct
@@ -65,19 +81,14 @@ class MultiP(Process):
 
     def run(self):
         if self.args:
-            self.queue.put([self.ID, self.func(self.image, self.args)])
+            self.queue.put([self.ID, self.func(self.image, *self.args)])
         else:
             self.queue.put([self.ID, self.func(self.image)])
         self.queue.put([self.ID, chr(0)])
 
 
-def dummy_func(text):
-    """Only dummy function."""
-    return text*2
-
-
 def multiproc(image, funct, args=()):
-    """Use all cores to make transformation."""
+    """Define wrapper for Multip, use all cores to make transformation."""
     cores = cpu_count()
     queue = Queue()
 
@@ -85,15 +96,34 @@ def multiproc(image, funct, args=()):
     width, height = image.size
     fract = int(height/cores)
 
-    for i in range(cpu_count()):
-        MultiP(i, queue, image.crop((0, fract*i, width, fract*(i+1))), funct, args)
+    for i in range(cores):
+        # pass more then requested region as some funtions calculate pixel value from wider area
+        # TODO: # WARNING: somehow malfunctioning
+        if i == 0:
+            MultiP(i, queue, image.crop((0, fract*i, width, fract*(i+1)+10)), funct, args)
+        elif i == cores:
+            MultiP(i, queue, image.crop((0, fract*i-10, width, fract*(i+1))), funct, args)
+        else:
+            MultiP(i, queue, image.crop((0, fract*i-10, width, fract*(i+1)+10)), funct, args)
 
     while cores:
         result = queue.get()
         if result[1] == chr(0):
             cores -= 1
         else:
-            obr2.paste(result[1], (0, result[0]*fract))
+            acqImage = result[1]
+            acqWidth, acqHeight = acqImage.size
+            acqID = result[0]
+            region = (0, acqID*fract, width, (acqID+1)*fract)
+            if acqID == 0:
+                # first image, so lets crop only, order is: left up right bottom
+                # WARNING: This is not working properly. Needs refactoring. Images got pasted somehow stupidly.
+                imSize = (0, 0, width, fract+10)
+            elif acqID == cores:
+                imSize = (0, 10, width, fract)
+            else:
+                imSize = (0, 10, width, fract+10)
+                obr2.paste(acqImage.crop(imSize), region)
 
     return obr2
 
@@ -336,13 +366,13 @@ def adaptiveTreshold(obr, method=MEAN, bias=0):
         for x in range(obr.size[0]):
             for y in range(obr.size[1]):
                 try:
-                    if method == MEDIAN:  # rewrite thi so it is flexible in area scaling
+                    if method == MEDIAN:  # TODO: rewrite this so it is flexible in area scaling
                         treshold = int(median([pxo[x-2, y-2], pxo[x-1, y-2], pxo[x, y-2], pxo[x+1, y-2], pxo[x+2, y-2],
                                                pxo[x-2, y-1], pxo[x-1, y-1], pxo[x, y-1], pxo[x+1, y-1], pxo[x+2, y-1],
                                                pxo[x-2, y], pxo[x-1, y], pxo[x, y], pxo[x+1, y], pxo[x+2, y],
                                                pxo[x-2, y+1], pxo[x-1, y+1], pxo[x, y+1], pxo[x+1, y+1], pxo[x+2, y+1],
                                                pxo[x-2, y+2], pxo[x-1, y+2], pxo[x, y+2], pxo[x+1, y+2], pxo[x+2, y+2]]))
-                    else:
+                    else:  # TODO: this too
                         treshold = (pxo[x-2, y-2]+pxo[x-1, y-2]+pxo[x, y-2]+pxo[x+1, y-2]+pxo[x+2, y-2] +
                                     pxo[x-2, y-1]+pxo[x-1, y-1]+pxo[x, y-1]+pxo[x+1, y-1]+pxo[x+2, y-1] +
                                     pxo[x-2, y] + pxo[x-1, y] + pxo[x, y] + pxo[x+1, y] + pxo[x+2, y] +
@@ -501,20 +531,21 @@ def show(obr, title="Peek"):
     main.title(title)
     canvas = Canvas(main, width=obr.size[0], height=obr.size[1])
     if sys.version_info[0] >= 3:
-        img = PhotoImage(obr)
-        canvas.create_image(obr.size[0]/2, obr.size[1]/2, image=img)  # TODO: does not work !!!
+        img = ImageTk.PhotoImage(file=obr)
     else:
         img = ImageTk.PhotoImage(obr)
-        canvas.create_image(obr.size[0]/2, obr.size[1]/2, image=img)
+    canvas.create_image(obr.size[0]/2, obr.size[1]/2, image=img)
     canvas.pack()
     main.mainloop()
 
 
 if __name__ == "__main__":
-    save(multiproc(multiproc(toGrey(openImage("img/obr.jpg")),
-                             medianFilter,
-                             ()),
-                   adaptiveTreshold,
-                   (MEAN, 1)),
-         "img/out.jpg")
+    image = openImage("img/obr.jpg")
+    image = resize(image, width=640)
+    image = toGrey(image)
+    # image = multiproc(image, medianFilter, ())
+    # image = multiproc(image, adaptiveTreshold, (MEDIAN, 1))
+    show(image)
+    image = multiproc(image, exponential, ())
+    show(image)
     # show(exponential(openImage("obr.jpg"),1.2))
