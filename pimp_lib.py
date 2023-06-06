@@ -102,9 +102,9 @@ def median(values):
     """Return median of list 'values'."""
     values.sort()
     if len(values) % 2 == 1:
-        return values[int(len(values)/2)]
+        return values[len(values) // 2]
     else:
-        return float((values[int(len(values)/2)]+values[(int(len(values)/2))-1])/2.0)
+        return float((values[len(values) // 2] + values[len(values) // 2 - 1]) / 2.0)
 
 
 class Dialog:
@@ -144,9 +144,8 @@ def resize(obr, width=1024, height=0):
     """Resize given image."""
     if height:
         return obr.resize((width, height), Image.ANTIALIAS)
-    else:
-        ratio = obr.size[0]/float(obr.size[1])
-        return obr.resize((width, int(width/ratio)), Image.ANTIALIAS)
+    ratio = obr.size[0]/float(obr.size[1])
+    return obr.resize((width, int(width/ratio)), Image.ANTIALIAS)
 
 
 def toGrey(obr):
@@ -251,7 +250,7 @@ def equalize(obr):
         data = obr.histogram()
         data_total = sum(data)
         data_256 = data_total/256
-        rozdelenie = dict()
+        rozdelenie = {}
         i = 0
         novy = 0
         for n in range(256):
@@ -310,21 +309,20 @@ def exponential(obr, koef=1.2):
 
 def substract(obr1, obr2):
     """Perform mathematical substraction for each pixel obr2(x,y) from obr1(x,y)."""
-    if obr1.mode == obr2.mode and obr1.size == obr2.size:
-        obr3 = Image.new(obr1.mode, obr1.size)
-        px2 = obr2.load()
-        px1 = obr1.load()
-        px3 = obr3.load()
-
-        if obr1.mode == "L":
-            for x in range(obr1.size[0]):
-                for y in range(obr1.size[1]):
-                    px3[x, y] = px1[x, y]-px2[x, y]
-            return obr3
-        if obr1.mode == "RGB":
-            return(merge(substract(disintegrate(obr1)[0], disintegrate(obr2)[0]), substract(disintegrate(obr1)[1], disintegrate(obr2)[1]), substract(disintegrate(obr1)[2], disintegrate(obr2)[2])))
-    else:
+    if obr1.mode != obr2.mode or obr1.size != obr2.size:
         raise IndexError
+    obr3 = Image.new(obr1.mode, obr1.size)
+    px2 = obr2.load()
+    px1 = obr1.load()
+    px3 = obr3.load()
+
+    if obr1.mode == "L":
+        for x in range(obr1.size[0]):
+            for y in range(obr1.size[1]):
+                px3[x, y] = px1[x, y]-px2[x, y]
+        return obr3
+    if obr1.mode == "RGB":
+        return(merge(substract(disintegrate(obr1)[0], disintegrate(obr2)[0]), substract(disintegrate(obr1)[1], disintegrate(obr2)[1]), substract(disintegrate(obr1)[2], disintegrate(obr2)[2])))
 
 
 def adaptiveTreshold(obr, method=MEAN, bias=0):
@@ -349,10 +347,7 @@ def adaptiveTreshold(obr, method=MEAN, bias=0):
                                     pxo[x-2, y+1]+pxo[x-1, y+1]+pxo[x, y+1]+pxo[x+1, y+1]+pxo[x+2, y+1] +
                                     pxo[x-2, y+2]+pxo[x-1, y+2]+pxo[x, y+2]+pxo[x+1, y+2]+pxo[x+2, y+2])/25
 
-                    if (pxo[x, y]+bias) > treshold:
-                        pxn[x, y] = 255
-                    else:
-                        pxn[x, y] = 0
+                    pxn[x, y] = 255 if (pxo[x, y]+bias) > treshold else 0
                 except IndexError:
                     pass
 
@@ -406,9 +401,9 @@ def mask(obr, m, bias=0, k=1):
 def histogram(obr, gui=True):
     """Plot out the histogram of image."""
     data = obr.histogram()
-    data_max = float(max(data))
     if gui:
         main2 = Tk()
+        data_max = float(max(data))
         main2.title("Histogram, image %s, mode %s, from %d to %d" % (obr.size, obr.mode, min(data), data_max))
         main = Frame(main2)
         main.pack(fill=BOTH, expand=1)
@@ -423,7 +418,7 @@ def histogram(obr, gui=True):
             for i in range(512):
                 board.create_line(i+2, 512, i+2, 512-(data[i/2]/data_max)*512, fill="red")
         else:
-            print("unknown type %s" % obr.mode)
+            print(f"unknown type {obr.mode}")
 
         board.pack(fill=BOTH, expand=1)
         Button(main, text="Close", command=main2.destroy).pack(fill=BOTH, expand=1)
@@ -500,12 +495,8 @@ def show(obr, title="Peek"):
     main = Tk()
     main.title(title)
     canvas = Canvas(main, width=obr.size[0], height=obr.size[1])
-    if sys.version_info[0] >= 3:
-        img = PhotoImage(obr)
-        canvas.create_image(obr.size[0]/2, obr.size[1]/2, image=img)  # TODO: does not work !!!
-    else:
-        img = ImageTk.PhotoImage(obr)
-        canvas.create_image(obr.size[0]/2, obr.size[1]/2, image=img)
+    img = PhotoImage(obr) if sys.version_info[0] >= 3 else ImageTk.PhotoImage(obr)
+    canvas.create_image(obr.size[0]/2, obr.size[1]/2, image=img)  # TODO: does not work !!!
     canvas.pack()
     main.mainloop()
 
